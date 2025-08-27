@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random User Generator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="input-container">
+            <input type="number" id="userCount" min="1" max="1000" placeholder="Enter number of random users">
+        </div>
+        
+        <div id="errorMessage" class="error" style="display: none;"></div>
+
+        <div id="loadingState" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>Generating random users...</p>
+        </div>
+
+        <div class="results-container">
+            <div class="results-grid">
+                <div class="results-header name-header">
+                    <select id="nameDisplay">
+                        <option value="first">First Name</option>
+                        <option value="last">Last Name</option>
+                    </select>
+                </div>
+                <div class="results-header">Gender</div>
+                <div class="results-header">Email Address</div>
+                <div class="results-header">Country</div>
+            </div>
+            
+            <div id="usersData" class="results-grid">
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
