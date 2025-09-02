@@ -73,6 +73,7 @@ type NameDisplayType = 'first' | 'last';
 
 let currentUsers: RandomUser[] = [];
 let currentNameDisplay: NameDisplayType = 'first';
+let currentEditingIndex: number = -1;
 
 document.addEventListener('DOMContentLoaded', () => {
     const userCountInput = document.getElementById('userCount') as HTMLInputElement;
@@ -94,6 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
     userCountInput.addEventListener('keypress', handleKeyPress);
     nameDisplaySelect.addEventListener('change', handleNameDisplayChange);
     
+    setupModalEvents();
     generateUsers();
 });
 
@@ -133,10 +135,13 @@ async function generateUsers(): Promise<void> {
     }
 }
 
-const createCell = (content: string): HTMLDivElement => {
+const createCell = (content: string, dataLabel?: string): HTMLDivElement => {
     const cell = document.createElement('div');
     cell.className = 'result-cell';
     cell.textContent = content;
+    if (dataLabel) {
+        cell.setAttribute('data-label', dataLabel);
+    }
     return cell;
 };
 
@@ -153,14 +158,23 @@ function displayUsers(users: RandomUser[]): void {
     const usersData = document.getElementById('usersData') as HTMLDivElement;
     usersData.innerHTML = '';
 
-    const userElements = users.flatMap((user: RandomUser) => [
-        createCell(getDisplayName(user)),
-        createCell(capitalizeFirst(user.gender)),
-        createCell(user.email),
-        createCell(user.location.country)
-    ]);
-    
-    userElements.forEach((element: any) => usersData.appendChild(element));
+    users.forEach((user: RandomUser, index: number) => {
+        const userRow = document.createElement('div');
+        userRow.className = 'user-row';
+        userRow.style.display = 'contents';
+        
+        const nameCell = createCell(getDisplayName(user), 'Name');
+        const genderCell = createCell(capitalizeFirst(user.gender), 'Gender');
+        const emailCell = createCell(user.email, 'Email');
+        const countryCell = createCell(user.location.country, 'Country');
+        
+        [nameCell, genderCell, emailCell, countryCell].forEach(cell => {
+            cell.addEventListener('dblclick', () => openUserModal(index));
+            userRow.appendChild(cell);
+        });
+        
+        usersData.appendChild(userRow);
+    });
 }
 
 const showLoading = (): void => {
@@ -186,3 +200,113 @@ const hideError = (): void => {
 
 const capitalizeFirst = (str: string): string => 
     str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+
+function openUserModal(index: number): void {
+    const user = currentUsers[index];
+    currentEditingIndex = index;
+    
+    const modal = document.getElementById('userModal') as HTMLDivElement;
+    const modalPicture = document.getElementById('modalPicture') as HTMLImageElement;
+    const modalName = document.getElementById('modalName') as HTMLDivElement;
+    const modalAddress = document.getElementById('modalAddress') as HTMLSpanElement;
+    const modalEmail = document.getElementById('modalEmail') as HTMLSpanElement;
+    
+    modalPicture.src = user.picture.large;
+    modalName.textContent = `${capitalizeFirst(user.name.first)} ${capitalizeFirst(user.name.last)}`;
+    modalAddress.textContent = `${user.location.street.number} ${user.location.street.name}, ${user.location.city}, ${user.location.state}, ${user.location.country}, ${user.location.postcode}`;
+    modalEmail.textContent = user.email;
+    
+    modal.style.display = 'block';
+}
+
+function closeModal(): void {
+    const userModal = document.getElementById('userModal') as HTMLDivElement;
+    const editModal = document.getElementById('editModal') as HTMLDivElement;
+    userModal.style.display = 'none';
+    editModal.style.display = 'none';
+}
+
+function openEditModal(): void {
+    const user = currentUsers[currentEditingIndex];
+    
+    const editModal = document.getElementById('editModal') as HTMLDivElement;
+    const editFirstName = document.getElementById('editFirstName') as HTMLInputElement;
+    const editLastName = document.getElementById('editLastName') as HTMLInputElement;
+    const editEmail = document.getElementById('editEmail') as HTMLInputElement;
+    const editPhone = document.getElementById('editPhone') as HTMLInputElement;
+    const editCell = document.getElementById('editCell') as HTMLInputElement;
+    const editGender = document.getElementById('editGender') as HTMLSelectElement;
+    
+    editFirstName.value = user.name.first;
+    editLastName.value = user.name.last;
+    editEmail.value = user.email;
+    editPhone.value = user.phone;
+    editCell.value = user.cell;
+    editGender.value = user.gender;
+    
+    closeModal();
+    editModal.style.display = 'block';
+}
+
+function saveUser(): void {
+    const editFirstName = document.getElementById('editFirstName') as HTMLInputElement;
+    const editLastName = document.getElementById('editLastName') as HTMLInputElement;
+    const editEmail = document.getElementById('editEmail') as HTMLInputElement;
+    const editPhone = document.getElementById('editPhone') as HTMLInputElement;
+    const editCell = document.getElementById('editCell') as HTMLInputElement;
+    const editGender = document.getElementById('editGender') as HTMLSelectElement;
+    
+    if (!editFirstName.value.trim() || !editLastName.value.trim() || !editEmail.value.trim()) {
+        alert('Please fill in all required fields (First Name, Last Name, Email)');
+        return;
+    }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(editEmail.value)) {
+        alert('Please enter a valid email address');
+        return;
+    }
+    
+    currentUsers[currentEditingIndex].name.first = editFirstName.value.trim();
+    currentUsers[currentEditingIndex].name.last = editLastName.value.trim();
+    currentUsers[currentEditingIndex].email = editEmail.value.trim();
+    currentUsers[currentEditingIndex].phone = editPhone.value.trim();
+    currentUsers[currentEditingIndex].cell = editCell.value.trim();
+    currentUsers[currentEditingIndex].gender = editGender.value;
+    
+    closeModal();
+    displayUsers(currentUsers);
+}
+
+function deleteUser(): void {
+    if (confirm('Are you sure you want to delete this user?')) {
+        currentUsers.splice(currentEditingIndex, 1);
+        closeModal();
+        displayUsers(currentUsers);
+    }
+}
+
+function setupModalEvents(): void {
+    const closeBtn = document.querySelector('.close') as HTMLSpanElement;
+    const closeEditBtn = document.querySelector('.close-edit') as HTMLSpanElement;
+    const editBtn = document.getElementById('editBtn') as HTMLButtonElement;
+    const deleteBtn = document.getElementById('deleteBtn') as HTMLButtonElement;
+    const saveBtn = document.getElementById('saveBtn') as HTMLButtonElement;
+    const cancelBtn = document.getElementById('cancelBtn') as HTMLButtonElement;
+    
+    closeBtn?.addEventListener('click', closeModal);
+    closeEditBtn?.addEventListener('click', closeModal);
+    editBtn?.addEventListener('click', openEditModal);
+    deleteBtn?.addEventListener('click', deleteUser);
+    saveBtn?.addEventListener('click', saveUser);
+    cancelBtn?.addEventListener('click', closeModal);
+    
+    window.addEventListener('click', (event: MouseEvent) => {
+        const userModal = document.getElementById('userModal') as HTMLDivElement;
+        const editModal = document.getElementById('editModal') as HTMLDivElement;
+        
+        if (event.target === userModal || event.target === editModal) {
+            closeModal();
+        }
+    });
+}
