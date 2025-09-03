@@ -261,8 +261,7 @@ function saveUser(): void {
         return;
     }
     
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(editEmail.value)) {
+    if (!editEmail.value.includes('@') || !editEmail.value.includes('.')) {
         alert('Please enter a valid email address');
         return;
     }
@@ -287,19 +286,21 @@ function deleteUser(): void {
 }
 
 function setupModalEvents(): void {
-    const closeBtn = document.querySelector('.close') as HTMLSpanElement;
-    const closeEditBtn = document.querySelector('.close-edit') as HTMLSpanElement;
-    const editBtn = document.getElementById('editBtn') as HTMLButtonElement;
-    const deleteBtn = document.getElementById('deleteBtn') as HTMLButtonElement;
-    const saveBtn = document.getElementById('saveBtn') as HTMLButtonElement;
-    const cancelBtn = document.getElementById('cancelBtn') as HTMLButtonElement;
-    
-    closeBtn?.addEventListener('click', closeModal);
-    closeEditBtn?.addEventListener('click', closeModal);
-    editBtn?.addEventListener('click', openEditModal);
-    deleteBtn?.addEventListener('click', deleteUser);
-    saveBtn?.addEventListener('click', saveUser);
-    cancelBtn?.addEventListener('click', closeModal);
+    document.addEventListener('click', (event: MouseEvent) => {
+        const target = event.target as HTMLElement;
+        
+        if (target.classList.contains('close') || target.classList.contains('close-edit')) {
+            closeModal();
+        } else if (target.id === 'editBtn') {
+            openEditModal();
+        } else if (target.id === 'deleteBtn') {
+            deleteUser();
+        } else if (target.id === 'saveBtn') {
+            saveUser();
+        } else if (target.id === 'cancelBtn') {
+            closeModal();
+        }
+    });
     
     window.addEventListener('click', (event: MouseEvent) => {
         const userModal = document.getElementById('userModal') as HTMLDivElement;

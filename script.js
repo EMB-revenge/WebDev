@@ -152,8 +152,7 @@ function saveUser() {
         alert('Please fill in all required fields (First Name, Last Name, Email)');
         return;
     }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(editEmail.value)) {
+    if (!editEmail.value.includes('@') || !editEmail.value.includes('.')) {
         alert('Please enter a valid email address');
         return;
     }
@@ -174,18 +173,24 @@ function deleteUser() {
     }
 }
 function setupModalEvents() {
-    const closeBtn = document.querySelector('.close');
-    const closeEditBtn = document.querySelector('.close-edit');
-    const editBtn = document.getElementById('editBtn');
-    const deleteBtn = document.getElementById('deleteBtn');
-    const saveBtn = document.getElementById('saveBtn');
-    const cancelBtn = document.getElementById('cancelBtn');
-    closeBtn === null || closeBtn === void 0 ? void 0 : closeBtn.addEventListener('click', closeModal);
-    closeEditBtn === null || closeEditBtn === void 0 ? void 0 : closeEditBtn.addEventListener('click', closeModal);
-    editBtn === null || editBtn === void 0 ? void 0 : editBtn.addEventListener('click', openEditModal);
-    deleteBtn === null || deleteBtn === void 0 ? void 0 : deleteBtn.addEventListener('click', deleteUser);
-    saveBtn === null || saveBtn === void 0 ? void 0 : saveBtn.addEventListener('click', saveUser);
-    cancelBtn === null || cancelBtn === void 0 ? void 0 : cancelBtn.addEventListener('click', closeModal);
+    document.addEventListener('click', (event) => {
+        const target = event.target;
+        if (target.classList.contains('close') || target.classList.contains('close-edit')) {
+            closeModal();
+        }
+        else if (target.id === 'editBtn') {
+            openEditModal();
+        }
+        else if (target.id === 'deleteBtn') {
+            deleteUser();
+        }
+        else if (target.id === 'saveBtn') {
+            saveUser();
+        }
+        else if (target.id === 'cancelBtn') {
+            closeModal();
+        }
+    });
     window.addEventListener('click', (event) => {
         const userModal = document.getElementById('userModal');
         const editModal = document.getElementById('editModal');
