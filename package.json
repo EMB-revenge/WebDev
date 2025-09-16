@@ -12,5 +12,17 @@
   "license": "ISC",
   "devDependencies": {
     "typescript": "^5.9.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EMB-revenge/WebDev.git"
+  },
+  "bugs": {
+    "url": "https://github.com/EMB-revenge/WebDev/issues"
+  },
+  "homepage": "https://github.com/EMB-revenge/WebDev#readme",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.1.0"
   }
 }

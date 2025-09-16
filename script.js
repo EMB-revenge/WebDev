@@ -22,7 +22,8 @@ document.addEventListener('DOMContentLoaded', () => {
     generateUsers();
 });
 const fetchUsers = async (count) => {
-    const response = await fetch(`https://randomuser.me/api/?results=${count}`);
+    // Use our local API server instead of randomuser.me
+    const response = await fetch(`http://localhost:3000/api?results=${count}`);
     if (!response.ok) {
         throw new Error(`API request failed with status: ${response.status}`);
     }
