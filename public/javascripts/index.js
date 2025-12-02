@@ -1,46 +1,44 @@
-import { $ } from './common.js'
+import { select } from './common.js'
 
-const content = $('#contentContainer')
+const contentContainer = select('#contentContainer')
 
-async function loadFragment(path) {
-  const res = await fetch(path)
-  const html = await res.text()
-  content.innerHTML = html
+async function fetchFragmentHtml(templatePath) {
+  const response = await fetch(templatePath)
+  const html = await response.text()
+  contentContainer.innerHTML = html
 }
 
-async function showLogin() {
-  await loadFragment('/templates/login.html')
-  const mod = await import('./login/login.js')
-  mod.default()
+async function renderLoginView() {
+  await fetchFragmentHtml('/templates/login.html')
+  const loginModule = await import('./login/login.js')
+  loginModule.default()
 }
 
-async function showSignup() {
-  await loadFragment('/templates/signup.html')
-  const mod = await import('./login/signup.js')
-  mod.default()
+async function renderSignupView() {
+  await fetchFragmentHtml('/templates/signup.html')
+  const signupModule = await import('./login/signup.js')
+  signupModule.default()
 }
 
-$('#getLoginPageBtn')?.addEventListener('click', (e) => {
-  e.preventDefault()
-  showLogin()
+select('#getLoginPageBtn')?.addEventListener('click', (event) => {
+  event.preventDefault()
+  renderLoginView()
 })
 
-$('#getSignupPageBtn')?.addEventListener('click', (e) => {
-  e.preventDefault()
-  showSignup()
+select('#getSignupPageBtn')?.addEventListener('click', (event) => {
+  event.preventDefault()
+  renderSignupView()
 })
 
-// Delegated links inside fragments
-document.addEventListener('click', (e) => {
-  const t = e.target
-  if (t && t.id === 'loginPageLink') {
-    e.preventDefault()
-    showLogin()
-  } else if (t && t.id === 'signupPageLink') {
-    e.preventDefault()
-    showSignup()
+document.addEventListener('click', (event) => {
+  const target = event.target
+  if (target && target.id === 'loginPageLink') {
+    event.preventDefault()
+    renderLoginView()
+  } else if (target && target.id === 'signupPageLink') {
+    event.preventDefault()
+    renderSignupView()
   }
 })
 
-// Default view
-showSignup()
+renderSignupView()
