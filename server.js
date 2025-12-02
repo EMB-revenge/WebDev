@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // In-memory storage for users
 const users = [];
@@ -11,16 +11,16 @@ const users = [];
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(process.cwd()));
+app.use(express.static(path.join(process.cwd(), 'public')));
 
-// Serve the main page (signup)
+// Serve the main page
 app.get('/', (req, res) => {
-    res.sendFile(path.join(process.cwd(), 'signup.html'));
+    res.sendFile(path.join(process.cwd(), 'public', 'index.html'));
 });
 
 // Serve login page
 app.get('/login', (req, res) => {
-    res.sendFile(path.join(process.cwd(), 'login.html'));
+    res.sendFile(path.join(process.cwd(), 'public', 'login.html'));
 });
 
 // Signup endpoint
@@ -112,4 +112,8 @@ app.get('/api/users', (req, res) => {
 
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
+});
+// Serve signup page
+app.get('/signup', (req, res) => {
+    res.sendFile(path.join(process.cwd(), 'public', 'signup.html'));
 });
