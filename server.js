@@ -7,6 +7,29 @@ const PORT = process.env.PORT || 3000;
 // In-memory storage for users
 const users = [];
 
+const isValidEmail = (value) => {
+    const str = String(value || '').toLowerCase().trim();
+    const atIndex = str.indexOf('@');
+    if (atIndex <= 0) return false; // must have something before '@'
+    const dotIndex = str.indexOf('.', atIndex + 1);
+    if (dotIndex <= atIndex + 1) return false; // must have '.' after '@' with at least one char in between
+    if (dotIndex >= str.length - 1) return false; // must have something after '.'
+    return true;
+};
+
+const isStrongPassword = (value) => {
+    const s = String(value || '');
+    if (s.length < 8) return false;
+    let hasUpper = false, hasLower = false, hasDigit = false;
+    for (let i = 0; i < s.length; i++) {
+        const ch = s[i];
+        if (ch >= 'A' && ch <= 'Z') hasUpper = true;
+        else if (ch >= 'a' && ch <= 'z') hasLower = true;
+        else if (ch >= '0' && ch <= '9') hasDigit = true;
+    }
+    return hasUpper && hasLower && hasDigit;
+};
+
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -14,18 +37,19 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(process.cwd(), 'public')));
 
 // Serve the main page
-app.get('/', (req, res) => {
+app.get('/', (res) => {
     res.sendFile(path.join(process.cwd(), 'public', 'index.html'));
 });
 
 // Serve login page
-app.get('/login', (req, res) => {
+app.get('/login', (res) => {
     res.sendFile(path.join(process.cwd(), 'public', 'login.html'));
 });
 
 // Signup endpoint
 app.post('/api/signup', (req, res) => {
     const { firstname, lastname, email, birthdate, password, repassword } = req.body;
+    const normalizedEmail = String(email || '').trim().toLowerCase();
     
     // Basic validation
     if (!firstname || !lastname || !email || !birthdate || !password || !repassword) {
@@ -34,16 +58,30 @@ app.post('/api/signup', (req, res) => {
             message: 'Please fill up all fields' 
         });
     }
-    
+
+    if (!isValidEmail(normalizedEmail)) {
+        return res.status(400).json({
+            success: false,
+            message: 'Invalid email format'
+        });
+    }
+
+    if (!isStrongPassword(password)) {
+        return res.status(400).json({
+            success: false,
+            message: 'Password must be at least 8 characters and include upper, lower, and a number'
+        });
+    }
+
     if (password !== repassword) {
         return res.status(400).json({ 
             success: false, 
             message: 'Passwords do not match' 
         });
     }
-    
+
     // Check if user already exists
-    const existingUser = users.find(user => user.email === email);
+    const existingUser = users.find(user => user.email === normalizedEmail);
     if (existingUser) {
         return res.status(400).json({ 
             success: false, 
@@ -56,7 +94,7 @@ app.post('/api/signup', (req, res) => {
         id: users.length + 1,
         firstname,
         lastname,
-        email,
+        email: normalizedEmail,
         birthdate,
         password
     };
@@ -73,6 +111,7 @@ app.post('/api/signup', (req, res) => {
 // Login endpoint
 app.post('/api/login', (req, res) => {
     const { email, password } = req.body;
+    const normalizedEmail = String(email || '').trim().toLowerCase();
     
     if (!email || !password) {
         return res.status(400).json({ 
@@ -80,9 +119,16 @@ app.post('/api/login', (req, res) => {
             message: 'Email and password are required' 
         });
     }
+
+    if (!isValidEmail(normalizedEmail)) {
+        return res.status(400).json({
+            success: false,
+            message: 'Invalid email format'
+        });
+    }
     
     // Find user
-    const user = users.find(u => u.email === email && u.password === password);
+    const user = users.find(u => u.email === normalizedEmail && u.password === password);
     
     if (!user) {
         return res.status(401).json({ 
