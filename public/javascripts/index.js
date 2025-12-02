@@ -41,4 +41,4 @@ document.addEventListener('click', (event) => {
   }
 })
 
-renderSignupView()
+renderLoginView()

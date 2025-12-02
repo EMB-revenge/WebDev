@@ -10,10 +10,10 @@ const users = [];
 const isValidEmail = (value) => {
     const str = String(value || '').toLowerCase().trim();
     const atIndex = str.indexOf('@');
-    if (atIndex <= 0) return false; // must have something before '@'
-    const dotIndex = str.indexOf('.', atIndex + 1);
-    if (dotIndex <= atIndex + 1) return false; // must have '.' after '@' with at least one char in between
-    if (dotIndex >= str.length - 1) return false; // must have something after '.'
+    if (atIndex <= 0) return false; 
+    const dotIndex = str.indexOf('.', atIndex + 1); 
+    if (dotIndex <= atIndex + 1) return false; 
+    if (dotIndex >= str.length - 1) return false; 
     return true;
 };
 
@@ -37,12 +37,12 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(process.cwd(), 'public')));
 
 // Serve the main page
-app.get('/', (res) => {
+app.get('/', (req, res) => {
     res.sendFile(path.join(process.cwd(), 'public', 'index.html'));
 });
 
 // Serve login page
-app.get('/login', (res) => {
+app.get('/login', (req, res) => {
     res.sendFile(path.join(process.cwd(), 'public', 'login.html'));
 });
 
@@ -156,10 +156,11 @@ app.get('/api/users', (req, res) => {
     res.json(safeUsers);
 });
 
-app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-});
 // Serve signup page
 app.get('/signup', (req, res) => {
     res.sendFile(path.join(process.cwd(), 'public', 'signup.html'));
+});
+
+app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
 });
