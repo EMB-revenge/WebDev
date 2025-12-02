@@ -1,6 +1,7 @@
 "use strict";
 let currentUsers = [];
 let currentNameDisplay = 'first';
+let currentEditingIndex = -1;
 document.addEventListener('DOMContentLoaded', () => {
     const userCountInput = document.getElementById('userCount');
     const nameDisplaySelect = document.getElementById('nameDisplay');
@@ -17,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     userCountInput.addEventListener('keypress', handleKeyPress);
     nameDisplaySelect.addEventListener('change', handleNameDisplayChange);
+    setupModalEvents();
     generateUsers();
 });
 const fetchUsers = async (count) => {
@@ -49,10 +51,13 @@ async function generateUsers() {
         hideLoading();
     }
 }
-const createCell = (content) => {
+const createCell = (content, dataLabel) => {
     const cell = document.createElement('div');
     cell.className = 'result-cell';
     cell.textContent = content;
+    if (dataLabel) {
+        cell.setAttribute('data-label', dataLabel);
+    }
     return cell;
 };
 const getDisplayName = (user) => {
@@ -65,13 +70,20 @@ const getDisplayName = (user) => {
 function displayUsers(users) {
     const usersData = document.getElementById('usersData');
     usersData.innerHTML = '';
-    const userElements = users.flatMap((user) => [
-        createCell(getDisplayName(user)),
-        createCell(capitalizeFirst(user.gender)),
-        createCell(user.email),
-        createCell(user.location.country)
-    ]);
-    userElements.forEach((element) => usersData.appendChild(element));
+    users.forEach((user, index) => {
+        const userRow = document.createElement('div');
+        userRow.className = 'user-row';
+        userRow.style.display = 'contents';
+        const nameCell = createCell(getDisplayName(user), 'Name');
+        const genderCell = createCell(capitalizeFirst(user.gender), 'Gender');
+        const emailCell = createCell(user.email, 'Email');
+        const countryCell = createCell(user.location.country, 'Country');
+        [nameCell, genderCell, emailCell, countryCell].forEach(cell => {
+            cell.addEventListener('dblclick', () => openUserModal(index));
+            userRow.appendChild(cell);
+        });
+        usersData.appendChild(userRow);
+    });
 }
 const showLoading = () => {
     const loadingState = document.getElementById('loadingState');
@@ -91,3 +103,99 @@ const hideError = () => {
     errorDiv.style.display = 'none';
 };
 const capitalizeFirst = (str) => str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+function openUserModal(index) {
+    const user = currentUsers[index];
+    currentEditingIndex = index;
+    const modal = document.getElementById('userModal');
+    const modalPicture = document.getElementById('modalPicture');
+    const modalName = document.getElementById('modalName');
+    const modalAddress = document.getElementById('modalAddress');
+    const modalEmail = document.getElementById('modalEmail');
+    modalPicture.src = user.picture.large;
+    modalName.textContent = `${capitalizeFirst(user.name.first)} ${capitalizeFirst(user.name.last)}`;
+    modalAddress.textContent = `${user.location.street.number} ${user.location.street.name}, ${user.location.city}, ${user.location.state}, ${user.location.country}, ${user.location.postcode}`;
+    modalEmail.textContent = user.email;
+    modal.style.display = 'block';
+}
+function closeModal() {
+    const userModal = document.getElementById('userModal');
+    const editModal = document.getElementById('editModal');
+    userModal.style.display = 'none';
+    editModal.style.display = 'none';
+}
+function openEditModal() {
+    const user = currentUsers[currentEditingIndex];
+    const editModal = document.getElementById('editModal');
+    const editFirstName = document.getElementById('editFirstName');
+    const editLastName = document.getElementById('editLastName');
+    const editEmail = document.getElementById('editEmail');
+    const editPhone = document.getElementById('editPhone');
+    const editCell = document.getElementById('editCell');
+    const editGender = document.getElementById('editGender');
+    editFirstName.value = user.name.first;
+    editLastName.value = user.name.last;
+    editEmail.value = user.email;
+    editPhone.value = user.phone;
+    editCell.value = user.cell;
+    editGender.value = user.gender;
+    closeModal();
+    editModal.style.display = 'block';
+}
+function saveUser() {
+    const editFirstName = document.getElementById('editFirstName');
+    const editLastName = document.getElementById('editLastName');
+    const editEmail = document.getElementById('editEmail');
+    const editPhone = document.getElementById('editPhone');
+    const editCell = document.getElementById('editCell');
+    const editGender = document.getElementById('editGender');
+    if (!editFirstName.value.trim() || !editLastName.value.trim() || !editEmail.value.trim()) {
+        alert('Please fill in all required fields (First Name, Last Name, Email)');
+        return;
+    }
+    if (!editEmail.value.includes('@') || !editEmail.value.includes('.')) {
+        alert('Please enter a valid email address');
+        return;
+    }
+    currentUsers[currentEditingIndex].name.first = editFirstName.value.trim();
+    currentUsers[currentEditingIndex].name.last = editLastName.value.trim();
+    currentUsers[currentEditingIndex].email = editEmail.value.trim();
+    currentUsers[currentEditingIndex].phone = editPhone.value.trim();
+    currentUsers[currentEditingIndex].cell = editCell.value.trim();
+    currentUsers[currentEditingIndex].gender = editGender.value;
+    closeModal();
+    displayUsers(currentUsers);
+}
+function deleteUser() {
+    if (confirm('Are you sure you want to delete this user?')) {
+        currentUsers.splice(currentEditingIndex, 1);
+        closeModal();
+        displayUsers(currentUsers);
+    }
+}
+function setupModalEvents() {
+    document.addEventListener('click', (event) => {
+        const target = event.target;
+        if (target.classList.contains('close') || target.classList.contains('close-edit')) {
+            closeModal();
+        }
+        else if (target.id === 'editBtn') {
+            openEditModal();
+        }
+        else if (target.id === 'deleteBtn') {
+            deleteUser();
+        }
+        else if (target.id === 'saveBtn') {
+            saveUser();
+        }
+        else if (target.id === 'cancelBtn') {
+            closeModal();
+        }
+    });
+    window.addEventListener('click', (event) => {
+        const userModal = document.getElementById('userModal');
+        const editModal = document.getElementById('editModal');
+        if (event.target === userModal || event.target === editModal) {
+            closeModal();
+        }
+    });
+}
